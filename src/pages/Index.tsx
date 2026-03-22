@@ -3,6 +3,7 @@ import { Zap } from "lucide-react";
 import { SearchBar } from "@/components/SearchBar";
 import { ProductCard } from "@/components/ProductCard";
 import { StatsBar } from "@/components/StatsBar";
+import { AIChatPanel } from "@/components/AIChatPanel";
 import { mockProducts, type Store } from "@/lib/mockData";
 
 const Index = () => {
