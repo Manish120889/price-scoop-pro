@@ -3,6 +3,7 @@ import { Zap } from "lucide-react";
 import { SearchBar } from "@/components/SearchBar";
 import { ProductCard } from "@/components/ProductCard";
 import { StatsBar } from "@/components/StatsBar";
+import { AIChatPanel } from "@/components/AIChatPanel";
 import { mockProducts, type Store } from "@/lib/mockData";
 
 const Index = () => {
@@ -123,6 +124,9 @@ const Index = () => {
       <footer className="border-t mt-16 py-6 text-center text-xs text-muted-foreground">
         <p>DealRadar — Price data is simulated for demonstration purposes.</p>
       </footer>
+
+      {/* AI Chat */}
+      <AIChatPanel />
     </div>
   );
 };
