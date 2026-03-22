@@ -1,4 +1,4 @@
-import { Search, SlidersHorizontal } from "lucide-react";
+import { Search, SlidersHorizontal, Globe, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,8 @@ type Props = {
   onCategoryChange: (c: string) => void;
   sortBy: string;
   onSortChange: (s: string) => void;
+  onLiveSearch?: () => void;
+  isSearching?: boolean;
 };
 
 export const SearchBar = ({
@@ -24,6 +26,8 @@ export const SearchBar = ({
   onCategoryChange,
   sortBy,
   onSortChange,
+  onLiveSearch,
+  isSearching,
 }: Props) => {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -35,18 +39,36 @@ export const SearchBar = ({
     );
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && onLiveSearch && query.trim()) {
+      onLiveSearch();
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex gap-3">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by product, brand, or category..."
+            placeholder="Search any product — press Enter for live Amazon results..."
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
+            onKeyDown={handleKeyDown}
             className="pl-10 h-12 text-base bg-card border-border shadow-sm"
           />
         </div>
+        {onLiveSearch && (
+          <Button
+            onClick={onLiveSearch}
+            disabled={!query.trim() || isSearching}
+            size="lg"
+            className="h-12 gap-2"
+          >
+            {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Globe className="h-4 w-4" />}
+            Live Search
+          </Button>
+        )}
         <Button
           variant={filtersOpen ? "default" : "outline"}
           size="lg"
