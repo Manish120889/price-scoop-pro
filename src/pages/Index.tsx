@@ -124,6 +124,9 @@ const Index = () => {
       <footer className="border-t mt-16 py-6 text-center text-xs text-muted-foreground">
         <p>DealRadar — Price data is simulated for demonstration purposes.</p>
       </footer>
+
+      {/* AI Chat */}
+      <AIChatPanel />
     </div>
   );
 };
