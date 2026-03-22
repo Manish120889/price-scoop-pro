@@ -1,21 +1,57 @@
-import { useState, useMemo } from "react";
-import { Zap } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { Zap, Globe, Database } from "lucide-react";
 import { SearchBar } from "@/components/SearchBar";
 import { ProductCard } from "@/components/ProductCard";
 import { StatsBar } from "@/components/StatsBar";
 import { AIChatPanel } from "@/components/AIChatPanel";
 import { mockProducts, type Store } from "@/lib/mockData";
+import { searchProducts, liveProductToProduct } from "@/lib/productApi";
+import type { Product } from "@/lib/mockData";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
   const [query, setQuery] = useState("");
   const [selectedStores, setSelectedStores] = useState<Store[]>([]);
   const [selectedCategory, setSelectedCategory] = useState("");
   const [sortBy, setSortBy] = useState("discount");
+  const [liveProducts, setLiveProducts] = useState<Product[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [dataSource, setDataSource] = useState<"local" | "live">("local");
+  const { toast } = useToast();
+
+  const handleLiveSearch = useCallback(async () => {
+    if (!query.trim()) {
+      setDataSource("local");
+      setLiveProducts([]);
+      return;
+    }
+    setIsSearching(true);
+    setDataSource("live");
+    try {
+      const result = await searchProducts(query);
+      if (result.error) {
+        toast({ title: "Search issue", description: result.error, variant: "destructive" });
+        setDataSource("local");
+      } else if (result.products.length === 0) {
+        toast({ title: "No results", description: "No live results found. Showing local catalog." });
+        setDataSource("local");
+      } else {
+        setLiveProducts(result.products.map(liveProductToProduct));
+        toast({ title: `Found ${result.products.length} live products`, description: "Showing real-time Amazon results" });
+      }
+    } catch {
+      toast({ title: "Search failed", description: "Falling back to local catalog", variant: "destructive" });
+      setDataSource("local");
+    }
+    setIsSearching(false);
+  }, [query, toast]);
+
+  const products = dataSource === "live" ? liveProducts : mockProducts;
 
   const filtered = useMemo(() => {
-    let results = [...mockProducts];
+    let results = [...products];
 
-    if (query.trim()) {
+    if (query.trim() && dataSource === "local") {
       const q = query.toLowerCase();
       results = results.filter(
         (p) =>
@@ -50,13 +86,13 @@ const Index = () => {
     });
 
     return results;
-  }, [query, selectedStores, selectedCategory, sortBy]);
+  }, [query, selectedStores, selectedCategory, sortBy, products, dataSource]);
 
   return (
     <div className="min-h-screen">
       {/* Header */}
       <header className="border-b bg-card/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container max-w-6xl mx-auto px-4 py-4 flex items-center gap-3">
+        <div className="container max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
               <Zap className="h-5 w-5 text-primary-foreground" />
@@ -65,6 +101,17 @@ const Index = () => {
               <h1 className="text-lg font-bold leading-none">DealRadar</h1>
               <p className="text-xs text-muted-foreground">Track prices. Find deals.</p>
             </div>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            {dataSource === "live" ? (
+              <span className="flex items-center gap-1 px-2 py-1 bg-savings/10 text-savings rounded-full font-medium">
+                <Globe className="h-3 w-3" /> Live Data
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 px-2 py-1 bg-secondary rounded-full">
+                <Database className="h-3 w-3" /> Local Catalog
+              </span>
+            )}
           </div>
         </div>
       </header>
@@ -76,7 +123,7 @@ const Index = () => {
             Find the best deals across top stores
           </h2>
           <p className="text-muted-foreground mt-2 max-w-xl">
-            Search any product, brand, or category to see current discounts, price history, and all-time lowest prices from Amazon, Best Buy, Walmart, and Target.
+            Search any product to get <strong>real-time prices from Amazon</strong>, or browse our curated catalog of 54+ products across Best Buy, Walmart, and Target.
           </p>
         </div>
 
@@ -91,15 +138,39 @@ const Index = () => {
             onCategoryChange={setSelectedCategory}
             sortBy={sortBy}
             onSortChange={setSortBy}
+            onLiveSearch={handleLiveSearch}
+            isSearching={isSearching}
           />
         </div>
 
         {/* Stats */}
         <StatsBar products={filtered} />
 
+        {/* Source indicator */}
+        {dataSource === "live" && liveProducts.length > 0 && (
+          <div className="flex items-center gap-2 animate-fade-up">
+            <span className="text-sm text-muted-foreground">
+              Showing live Amazon results for "{query}"
+            </span>
+            <button
+              onClick={() => { setDataSource("local"); setLiveProducts([]); }}
+              className="text-xs text-primary hover:underline"
+            >
+              Back to local catalog
+            </button>
+          </div>
+        )}
+
         {/* Results */}
         <div className="space-y-4">
-          {filtered.length === 0 ? (
+          {isSearching ? (
+            <div className="text-center py-16 animate-fade-in">
+              <div className="inline-flex items-center gap-2 text-muted-foreground">
+                <div className="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                <span>Searching Amazon for "{query}"...</span>
+              </div>
+            </div>
+          ) : filtered.length === 0 ? (
             <div className="text-center py-16 animate-fade-in">
               <p className="text-lg font-medium text-muted-foreground">No products found</p>
               <p className="text-sm text-muted-foreground mt-1">
@@ -122,7 +193,7 @@ const Index = () => {
 
       {/* Footer */}
       <footer className="border-t mt-16 py-6 text-center text-xs text-muted-foreground">
-        <p>DealRadar — Price data is simulated for demonstration purposes.</p>
+        <p>DealRadar — Live data from Amazon via RapidAPI. Local catalog for Best Buy, Walmart & Target.</p>
       </footer>
 
       {/* AI Chat */}
