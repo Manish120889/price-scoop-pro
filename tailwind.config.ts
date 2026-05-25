@@ -47,28 +47,14 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
-        deal: "hsl(var(--deal))",
-        nav: {
-          DEFAULT: "hsl(var(--nav))",
-          foreground: "hsl(var(--nav-foreground))",
-          light: "hsl(var(--nav-light))",
+        ink: {
+          DEFAULT: "hsl(var(--ink))",
+          foreground: "hsl(var(--ink-foreground))",
         },
-        link: "hsl(var(--link))",
-        star: "hsl(var(--star))",
-        savings: {
-          DEFAULT: "hsl(var(--savings))",
-          bg: "hsl(var(--savings-bg))",
-        },
-        "price-drop": {
-          DEFAULT: "hsl(var(--price-drop))",
-          bg: "hsl(var(--price-drop-bg))",
-        },
-        store: {
-          amazon: "hsl(var(--store-amazon))",
-          bestbuy: "hsl(var(--store-bestbuy))",
-          walmart: "hsl(var(--store-walmart))",
-          target: "hsl(var(--store-target))",
-        },
+        saffron: "hsl(var(--saffron))",
+        turmeric: "hsl(var(--turmeric))",
+        mint: "hsl(var(--mint))",
+        cream: "hsl(var(--cream))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
