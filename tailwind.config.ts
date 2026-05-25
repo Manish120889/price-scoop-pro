@@ -48,6 +48,13 @@ export default {
           foreground: "hsl(var(--card-foreground))",
         },
         deal: "hsl(var(--deal))",
+        nav: {
+          DEFAULT: "hsl(var(--nav))",
+          foreground: "hsl(var(--nav-foreground))",
+          light: "hsl(var(--nav-light))",
+        },
+        link: "hsl(var(--link))",
+        star: "hsl(var(--star))",
         savings: {
           DEFAULT: "hsl(var(--savings))",
           bg: "hsl(var(--savings-bg))",
