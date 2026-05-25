@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Amazon+Ember:wght@400;500;700&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,32 +6,40 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 220 25% 10%;
+    --background: 0 0% 96%;
+    --foreground: 210 11% 15%;
     --card: 0 0% 100%;
-    --card-foreground: 220 25% 10%;
+    --card-foreground: 210 11% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 10%;
-    --primary: 162 63% 35%;
-    --primary-foreground: 0 0% 100%;
-    --secondary: 210 18% 94%;
-    --secondary-foreground: 220 25% 10%;
-    --muted: 210 14% 93%;
-    --muted-foreground: 220 10% 46%;
-    --accent: 35 92% 52%;
-    --accent-foreground: 0 0% 100%;
-    --destructive: 0 72% 51%;
+    --popover-foreground: 210 11% 15%;
+    /* Amazon orange-yellow primary */
+    --primary: 36 100% 50%;
+    --primary-foreground: 210 30% 12%;
+    /* Deep navy "header" */
+    --nav: 206 33% 16%;
+    --nav-foreground: 0 0% 100%;
+    --nav-light: 207 27% 24%;
+    --secondary: 210 15% 93%;
+    --secondary-foreground: 210 11% 15%;
+    --muted: 210 14% 96%;
+    --muted-foreground: 210 8% 40%;
+    /* Amazon link blue */
+    --link: 207 100% 32%;
+    --accent: 36 100% 50%;
+    --accent-foreground: 210 30% 12%;
+    --destructive: 0 72% 45%;
     --destructive-foreground: 0 0% 100%;
-    --border: 214 20% 90%;
-    --input: 214 20% 90%;
-    --ring: 162 63% 35%;
-    --radius: 0.625rem;
-    --deal: 162 63% 35%;
+    --border: 210 15% 88%;
+    --input: 210 15% 88%;
+    --ring: 36 100% 50%;
+    --radius: 0.375rem;
+    --deal: 0 80% 45%;
     --deal-foreground: 0 0% 100%;
-    --savings: 142 60% 40%;
-    --savings-bg: 142 60% 95%;
-    --price-drop: 0 72% 51%;
+    --savings: 8 85% 45%;
+    --savings-bg: 8 85% 96%;
+    --price-drop: 0 72% 45%;
     --price-drop-bg: 0 72% 96%;
+    --star: 36 100% 50%;
     --store-amazon: 33 100% 50%;
     --store-bestbuy: 215 100% 45%;
     --store-walmart: 207 100% 38%;
