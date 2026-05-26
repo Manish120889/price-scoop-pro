@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Menu, Search, ArrowUpRight, Clock, Flame, Leaf } from "lucide-react";
+import { ArrowUpRight, Clock, Flame, Leaf } from "lucide-react";
 import heroImg from "@/assets/recipes-hero.jpg";
+import { SiteNav } from "@/components/SiteNav";
 
 type Recipe = {
   id: string;
@@ -57,7 +57,7 @@ const macros = [
   { pct: 30, label: "Healthy Fats", note: "Hormones, joints, focus", icon: Leaf, color: "text-turmeric" },
 ];
 
-const nav = ["Home", "Journey", "Programs", "Video", "Recipes", "Community", "Store", "About"];
+
 
 const RecipeCard = ({ r, i }: { r: Recipe; i: number }) => (
   <article
