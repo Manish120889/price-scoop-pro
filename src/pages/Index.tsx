@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Menu, Search, ArrowUpRight, Clock, Flame, Leaf } from "lucide-react";
+import { ArrowUpRight, Clock, Flame, Leaf } from "lucide-react";
 import heroImg from "@/assets/recipes-hero.jpg";
+import { SiteNav } from "@/components/SiteNav";
 
 type Recipe = {
   id: string;
@@ -57,7 +57,7 @@ const macros = [
   { pct: 30, label: "Healthy Fats", note: "Hormones, joints, focus", icon: Leaf, color: "text-turmeric" },
 ];
 
-const nav = ["Home", "Journey", "Programs", "Video", "Recipes", "Community", "Store", "About"];
+
 
 const RecipeCard = ({ r, i }: { r: Recipe; i: number }) => (
   <article
@@ -96,42 +96,10 @@ const RecipeCard = ({ r, i }: { r: Recipe; i: number }) => (
 );
 
 const Index = () => {
-  const [active, setActive] = useState("Recipes");
-
   return (
     <div className="min-h-screen bg-background text-foreground grain">
-      {/* ─── Top bar ─── */}
-      <header className="border-b border-ink/15 bg-cream/90 backdrop-blur sticky top-0 z-50">
-        <div className="max-w-[1400px] mx-auto px-6 py-3 flex items-center justify-between gap-6">
-          <a href="#" className="flex items-baseline gap-2">
-            <span className="font-serif text-2xl font-black tracking-tight">Fatey</span>
-            <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground">Fitness Champion</span>
-          </a>
-          <nav className="hidden lg:flex items-center gap-1 text-sm">
-            {nav.map((n) => (
-              <button
-                key={n}
-                onClick={() => setActive(n)}
-                className={`px-3 py-1.5 transition-colors relative ${
-                  active === n ? "text-ink" : "text-muted-foreground hover:text-ink"
-                }`}
-              >
-                {n}
-                {active === n && <span className="absolute left-3 right-3 -bottom-0.5 h-0.5 bg-saffron" />}
-              </button>
-            ))}
-          </nav>
-          <div className="flex items-center gap-2">
-            <button className="p-2 hover:bg-ink/5 transition" aria-label="Search">
-              <Search className="h-4 w-4" />
-            </button>
-            <button className="hidden md:inline-flex bg-ink text-ink-foreground text-xs tracking-wider uppercase font-semibold px-4 py-2.5 hover:bg-saffron transition">
-              Join the cohort
-            </button>
-            <button className="lg:hidden p-2" aria-label="Menu"><Menu className="h-5 w-5" /></button>
-          </div>
-        </div>
-      </header>
+      <SiteNav />
+
 
       {/* ─── Hero ─── */}
       <section className="relative border-b border-ink/15 overflow-hidden">
