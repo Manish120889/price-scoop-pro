@@ -309,3 +309,41 @@ function EmptyCard({ title, body, cta }: { title: string; body: string; cta: { t
     </div>
   );
 }
+
+function BigCard({
+  icon: Icon, iconBg, label, value, sub, progress, progressColor, cta, accent,
+}: {
+  icon: any; iconBg: string; label: string; value: string; sub: string;
+  progress?: number; progressColor?: string;
+  cta?: { label: string; to: string };
+  accent: "sage" | "blue-green" | "earth";
+}) {
+  const ring = accent === "sage" ? "hover:border-sage" : accent === "blue-green" ? "hover:border-blue-green" : "hover:border-earth";
+  return (
+    <div className={`bg-white border border-sage/15 rounded-xl p-5 flex flex-col gap-3 transition shadow-sm hover:shadow-md ${ring}`}>
+      <div className="flex items-start justify-between">
+        <div className={`${iconBg} text-white p-2.5 rounded-full`}>
+          <Icon className="h-4 w-4" />
+        </div>
+        {cta && (
+          <Link to={cta.to} className="text-[10px] uppercase tracking-wider font-bold text-earth hover:underline">
+            {cta.label} →
+          </Link>
+        )}
+      </div>
+      <div>
+        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">{label}</div>
+        <div className="mt-1 font-serif text-3xl font-black leading-none">{value}</div>
+        <div className="text-xs text-muted-foreground mt-1.5">{sub}</div>
+      </div>
+      {typeof progress === "number" && (
+        <div className="h-1.5 bg-light-bg rounded-full overflow-hidden mt-auto">
+          <div
+            className={`h-full ${progressColor ?? "bg-sage"} transition-all`}
+            style={{ width: `${Math.max(0, Math.min(100, progress))}%` }}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
