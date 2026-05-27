@@ -55,6 +55,10 @@ export default {
         turmeric: "hsl(var(--turmeric))",
         mint: "hsl(var(--mint))",
         cream: "hsl(var(--cream))",
+        sage: "hsl(var(--sage))",
+        "blue-green": "hsl(var(--blue-green))",
+        earth: "hsl(var(--earth))",
+        "light-bg": "hsl(var(--light-bg))",
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
           foreground: "hsl(var(--sidebar-foreground))",
