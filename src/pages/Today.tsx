@@ -141,6 +141,53 @@ export default function Today() {
         </div>
       </section>
 
+      {/* Membership & progress cards */}
+      <section className="max-w-[1400px] mx-auto px-6 pt-10">
+        <div className="flex items-end justify-between mb-5">
+          <div>
+            <p className="text-xs uppercase tracking-[0.25em] text-sage font-bold">Your membership</p>
+            <h2 className="mt-1 font-serif text-3xl font-black">Progress & perks</h2>
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <BigCard
+            icon={Crown} iconBg="bg-earth"
+            label="Subscription" value={plan}
+            sub={renewalDate ? `Renews ${renewalDate}` : "Upgrade to unlock premium"}
+            cta={plan === "Free" ? { label: "Upgrade", to: "/programs" } : undefined}
+            accent="earth"
+          />
+          <BigCard
+            icon={Target} iconBg="bg-sage"
+            label="Program progress" value={`${programPct}%`}
+            sub={`${programTotals.done} of ${programTotals.total || 0} workouts`}
+            progress={programPct} progressColor="bg-sage" accent="sage"
+          />
+          <BigCard
+            icon={plan === "Free" ? Lock : Sparkles} iconBg="bg-blue-green"
+            label="Premium recipes" value={`${unlockedPremium}/${premiumCount || 0}`}
+            sub={plan === "Free" ? "Locked on Free plan" : "Unlocked for you"}
+            progress={premiumCount ? (unlockedPremium / premiumCount) * 100 : 0}
+            progressColor="bg-blue-green" accent="blue-green"
+          />
+          <BigCard
+            icon={Flame} iconBg="bg-earth"
+            label="Workout streak" value={`${streak}d`}
+            sub={streak >= 7 ? "Week-long streak!" : streak > 0 ? "Keep the chain alive" : "Start today"}
+            progress={Math.min(100, (streak / 7) * 100)}
+            progressColor="bg-earth" accent="earth"
+          />
+          <BigCard
+            icon={Zap} iconBg="bg-sage"
+            label="Engagement" value={`${engagement}`}
+            sub={engagementLabel}
+            progress={engagement}
+            progressColor="bg-gradient-to-r from-sage to-blue-green" accent="sage"
+          />
+        </div>
+      </section>
+
       {/* Quick stats */}
       <section className="max-w-[1400px] mx-auto px-6 py-10">
         <div className="grid sm:grid-cols-3 gap-4">
