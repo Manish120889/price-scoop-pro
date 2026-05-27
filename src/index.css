@@ -43,6 +43,12 @@
     --mint: 150 35% 38%;
     --cream: 36 50% 96%;
 
+    /* Wellness palette */
+    --sage: 120 16% 49%;                /* #6B8E6B */
+    --blue-green: 180 16% 57%;          /* #7BA8A8 */
+    --earth: 30 50% 64%;                /* #D4A574 */
+    --light-bg: 120 25% 92%;            /* #E8F0E8 */
+
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
