@@ -3,7 +3,10 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteNav } from "@/components/SiteNav";
 import { useAuth } from "@/hooks/useAuth";
-import { Heart, Activity, TrendingUp, Flame, Dumbbell, Calendar, ArrowRight } from "lucide-react";
+import {
+  Heart, Activity, TrendingUp, Flame, Dumbbell, Calendar, ArrowRight,
+  Crown, Sparkles, Target, Lock, Zap,
+} from "lucide-react";
 
 type Recipe = {
   id: string; slug: string; title: string; hero_image: string | null;
