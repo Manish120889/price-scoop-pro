@@ -21,6 +21,9 @@ export default function Today() {
   const { user, loading: authLoading } = useAuth();
   const [favorites, setFavorites] = useState<Recipe[]>([]);
   const [logs, setLogs] = useState<Log[]>([]);
+  const [allWorkoutDates, setAllWorkoutDates] = useState<string[]>([]);
+  const [programTotals, setProgramTotals] = useState({ done: 0, total: 0 });
+  const [premiumCount, setPremiumCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -28,9 +31,13 @@ export default function Today() {
     (async () => {
       const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
 
-      const [favRes, logsRes] = await Promise.all([
+      const [favRes, logsRes, allLogsRes, doneRes, daysRes, premRes] = await Promise.all([
         supabase.from("favorites").select("item_id").eq("user_id", user.id).eq("item_type", "recipe"),
         supabase.from("progress_logs").select("*").eq("user_id", user.id).gte("log_date", sevenDaysAgo).order("log_date", { ascending: false }),
+        supabase.from("progress_logs").select("log_date").eq("user_id", user.id).eq("workout_completed", true).order("log_date", { ascending: false }).limit(365),
+        supabase.from("progress_logs").select("program_day_id").eq("user_id", user.id).eq("workout_completed", true).not("program_day_id", "is", null),
+        supabase.from("program_days").select("id, is_rest_day"),
+        supabase.from("recipes").select("id", { count: "exact", head: true }).contains("tags", ["premium"]),
       ]);
 
       const ids = (favRes.data ?? []).map((f) => f.item_id);
@@ -38,7 +45,14 @@ export default function Today() {
         const { data: recipes } = await supabase.from("recipes").select("id, slug, title, hero_image, calories, protein_g, carbs_g, fats_g").in("id", ids);
         setFavorites(recipes ?? []);
       }
-      setLogs(logsRes.data ?? []);
+      setLogs((logsRes.data ?? []) as Log[]);
+      setAllWorkoutDates((allLogsRes.data ?? []).map((l: any) => l.log_date));
+
+      const doneDayIds = new Set((doneRes.data ?? []).map((d: any) => d.program_day_id));
+      const workoutDays = (daysRes.data ?? []).filter((d: any) => !d.is_rest_day);
+      const done = workoutDays.filter((d: any) => doneDayIds.has(d.id)).length;
+      setProgramTotals({ done, total: workoutDays.length });
+      setPremiumCount(premRes.count ?? 0);
       setLoading(false);
     })();
   }, [user]);
