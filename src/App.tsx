@@ -12,6 +12,7 @@ import ProgramDetail from "./pages/ProgramDetail.tsx";
 import Recipes from "./pages/Recipes.tsx";
 import RecipeDetail from "./pages/RecipeDetail.tsx";
 import Tracker from "./pages/Tracker.tsx";
+import Today from "./pages/Today.tsx";
 import Admin from "./pages/Admin.tsx";
 
 const queryClient = new QueryClient();
