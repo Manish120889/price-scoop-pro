@@ -3,7 +3,10 @@ import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { SiteNav } from "@/components/SiteNav";
 import { useAuth } from "@/hooks/useAuth";
-import { Heart, Activity, TrendingUp, Flame, Dumbbell, Calendar, ArrowRight } from "lucide-react";
+import {
+  Heart, Activity, TrendingUp, Flame, Dumbbell, Calendar, ArrowRight,
+  Crown, Sparkles, Target, Lock, Zap,
+} from "lucide-react";
 
 type Recipe = {
   id: string; slug: string; title: string; hero_image: string | null;
@@ -18,6 +21,9 @@ export default function Today() {
   const { user, loading: authLoading } = useAuth();
   const [favorites, setFavorites] = useState<Recipe[]>([]);
   const [logs, setLogs] = useState<Log[]>([]);
+  const [allWorkoutDates, setAllWorkoutDates] = useState<string[]>([]);
+  const [programTotals, setProgramTotals] = useState({ done: 0, total: 0 });
+  const [premiumCount, setPremiumCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -25,9 +31,13 @@ export default function Today() {
     (async () => {
       const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString().slice(0, 10);
 
-      const [favRes, logsRes] = await Promise.all([
+      const [favRes, logsRes, allLogsRes, doneRes, daysRes, premRes] = await Promise.all([
         supabase.from("favorites").select("item_id").eq("user_id", user.id).eq("item_type", "recipe"),
         supabase.from("progress_logs").select("*").eq("user_id", user.id).gte("log_date", sevenDaysAgo).order("log_date", { ascending: false }),
+        supabase.from("progress_logs").select("log_date").eq("user_id", user.id).eq("workout_completed", true).order("log_date", { ascending: false }).limit(365),
+        supabase.from("progress_logs").select("program_day_id").eq("user_id", user.id).eq("workout_completed", true).not("program_day_id", "is", null),
+        supabase.from("program_days").select("id, is_rest_day"),
+        supabase.from("recipes").select("id", { count: "exact", head: true }).contains("tags", ["premium"]),
       ]);
 
       const ids = (favRes.data ?? []).map((f) => f.item_id);
@@ -35,7 +45,14 @@ export default function Today() {
         const { data: recipes } = await supabase.from("recipes").select("id, slug, title, hero_image, calories, protein_g, carbs_g, fats_g").in("id", ids);
         setFavorites(recipes ?? []);
       }
-      setLogs(logsRes.data ?? []);
+      setLogs((logsRes.data ?? []) as Log[]);
+      setAllWorkoutDates((allLogsRes.data ?? []).map((l: any) => l.log_date));
+
+      const doneDayIds = new Set((doneRes.data ?? []).map((d: any) => d.program_day_id));
+      const workoutDays = (daysRes.data ?? []).filter((d: any) => !d.is_rest_day);
+      const done = workoutDays.filter((d: any) => doneDayIds.has(d.id)).length;
+      setProgramTotals({ done, total: workoutDays.length });
+      setPremiumCount(premRes.count ?? 0);
       setLoading(false);
     })();
   }, [user]);
@@ -65,6 +82,43 @@ export default function Today() {
     ? Math.round(favorites.reduce((a, r) => a + (r.protein_g ?? 0), 0) / favorites.length)
     : 0;
 
+  // Membership (placeholder — wire to billing once enabled)
+  const plan: "Free" | "Pro" = "Free";
+  const renewalDate: string | null = null;
+
+  // Program progress
+  const programPct = programTotals.total ? Math.round((programTotals.done / programTotals.total) * 100) : 0;
+
+  // Premium recipes unlocked
+  const unlockedPremium = plan === "Free" ? 0 : premiumCount;
+
+  // Streak — consecutive days ending today (or yesterday) with workout_completed
+  const streak = (() => {
+    const set = new Set(allWorkoutDates);
+    let count = 0;
+    const d = new Date();
+    if (!set.has(d.toISOString().slice(0, 10))) d.setDate(d.getDate() - 1);
+    while (set.has(d.toISOString().slice(0, 10))) {
+      count++;
+      d.setDate(d.getDate() - 1);
+    }
+    return count;
+  })();
+
+  // Engagement: weighted composite (0–100)
+  const engagement = Math.min(
+    100,
+    Math.round(
+      workoutCount * 10 +
+      streak * 6 +
+      favorites.length * 3 +
+      weightLogs.length * 4 +
+      programPct * 0.3
+    )
+  );
+  const engagementLabel =
+    engagement >= 80 ? "On fire" : engagement >= 50 ? "Strong week" : engagement >= 20 ? "Warming up" : "Just starting";
+
   const greeting = (() => {
     const h = new Date().getHours();
     if (h < 12) return "Good morning";
@@ -84,6 +138,53 @@ export default function Today() {
             {greeting}, <span className="text-sage">{user.email?.split("@")[0]}</span>.
           </h1>
           <p className="mt-4 text-muted-foreground max-w-2xl">Here's your week at a glance — saved recipes, recent logs, and how you're trending.</p>
+        </div>
+      </section>
+
+      {/* Membership & progress cards */}
+      <section className="max-w-[1400px] mx-auto px-6 pt-10">
+        <div className="flex items-end justify-between mb-5">
+          <div>
+            <p className="text-xs uppercase tracking-[0.25em] text-sage font-bold">Your membership</p>
+            <h2 className="mt-1 font-serif text-3xl font-black">Progress & perks</h2>
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          <BigCard
+            icon={Crown} iconBg="bg-earth"
+            label="Subscription" value={plan}
+            sub={renewalDate ? `Renews ${renewalDate}` : "Upgrade to unlock premium"}
+            cta={plan === "Free" ? { label: "Upgrade", to: "/programs" } : undefined}
+            accent="earth"
+          />
+          <BigCard
+            icon={Target} iconBg="bg-sage"
+            label="Program progress" value={`${programPct}%`}
+            sub={`${programTotals.done} of ${programTotals.total || 0} workouts`}
+            progress={programPct} progressColor="bg-sage" accent="sage"
+          />
+          <BigCard
+            icon={plan === "Free" ? Lock : Sparkles} iconBg="bg-blue-green"
+            label="Premium recipes" value={`${unlockedPremium}/${premiumCount || 0}`}
+            sub={plan === "Free" ? "Locked on Free plan" : "Unlocked for you"}
+            progress={premiumCount ? (unlockedPremium / premiumCount) * 100 : 0}
+            progressColor="bg-blue-green" accent="blue-green"
+          />
+          <BigCard
+            icon={Flame} iconBg="bg-earth"
+            label="Workout streak" value={`${streak}d`}
+            sub={streak >= 7 ? "Week-long streak!" : streak > 0 ? "Keep the chain alive" : "Start today"}
+            progress={Math.min(100, (streak / 7) * 100)}
+            progressColor="bg-earth" accent="earth"
+          />
+          <BigCard
+            icon={Zap} iconBg="bg-sage"
+            label="Engagement" value={`${engagement}`}
+            sub={engagementLabel}
+            progress={engagement}
+            progressColor="bg-gradient-to-r from-sage to-blue-green" accent="sage"
+          />
         </div>
       </section>
 
@@ -205,6 +306,44 @@ function EmptyCard({ title, body, cta }: { title: string; body: string; cta: { t
       <h3 className="font-serif text-xl font-bold">{title}</h3>
       <p className="mt-2 text-sm text-muted-foreground">{body}</p>
       <Link to={cta.to} className="inline-block mt-4 bg-sage text-white px-4 py-2 text-xs uppercase tracking-wider font-semibold hover:bg-blue-green transition">{cta.label}</Link>
+    </div>
+  );
+}
+
+function BigCard({
+  icon: Icon, iconBg, label, value, sub, progress, progressColor, cta, accent,
+}: {
+  icon: any; iconBg: string; label: string; value: string; sub: string;
+  progress?: number; progressColor?: string;
+  cta?: { label: string; to: string };
+  accent: "sage" | "blue-green" | "earth";
+}) {
+  const ring = accent === "sage" ? "hover:border-sage" : accent === "blue-green" ? "hover:border-blue-green" : "hover:border-earth";
+  return (
+    <div className={`bg-white border border-sage/15 rounded-xl p-5 flex flex-col gap-3 transition shadow-sm hover:shadow-md ${ring}`}>
+      <div className="flex items-start justify-between">
+        <div className={`${iconBg} text-white p-2.5 rounded-full`}>
+          <Icon className="h-4 w-4" />
+        </div>
+        {cta && (
+          <Link to={cta.to} className="text-[10px] uppercase tracking-wider font-bold text-earth hover:underline">
+            {cta.label} →
+          </Link>
+        )}
+      </div>
+      <div>
+        <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">{label}</div>
+        <div className="mt-1 font-serif text-3xl font-black leading-none">{value}</div>
+        <div className="text-xs text-muted-foreground mt-1.5">{sub}</div>
+      </div>
+      {typeof progress === "number" && (
+        <div className="h-1.5 bg-light-bg rounded-full overflow-hidden mt-auto">
+          <div
+            className={`h-full ${progressColor ?? "bg-sage"} transition-all`}
+            style={{ width: `${Math.max(0, Math.min(100, progress))}%` }}
+          />
+        </div>
+      )}
     </div>
   );
 }
