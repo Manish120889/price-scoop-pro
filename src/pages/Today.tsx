@@ -82,6 +82,43 @@ export default function Today() {
     ? Math.round(favorites.reduce((a, r) => a + (r.protein_g ?? 0), 0) / favorites.length)
     : 0;
 
+  // Membership (placeholder — wire to billing once enabled)
+  const plan: "Free" | "Pro" = "Free";
+  const renewalDate: string | null = null;
+
+  // Program progress
+  const programPct = programTotals.total ? Math.round((programTotals.done / programTotals.total) * 100) : 0;
+
+  // Premium recipes unlocked
+  const unlockedPremium = plan === "Free" ? 0 : premiumCount;
+
+  // Streak — consecutive days ending today (or yesterday) with workout_completed
+  const streak = (() => {
+    const set = new Set(allWorkoutDates);
+    let count = 0;
+    const d = new Date();
+    if (!set.has(d.toISOString().slice(0, 10))) d.setDate(d.getDate() - 1);
+    while (set.has(d.toISOString().slice(0, 10))) {
+      count++;
+      d.setDate(d.getDate() - 1);
+    }
+    return count;
+  })();
+
+  // Engagement: weighted composite (0–100)
+  const engagement = Math.min(
+    100,
+    Math.round(
+      workoutCount * 10 +
+      streak * 6 +
+      favorites.length * 3 +
+      weightLogs.length * 4 +
+      programPct * 0.3
+    )
+  );
+  const engagementLabel =
+    engagement >= 80 ? "On fire" : engagement >= 50 ? "Strong week" : engagement >= 20 ? "Warming up" : "Just starting";
+
   const greeting = (() => {
     const h = new Date().getHours();
     if (h < 12) return "Good morning";
