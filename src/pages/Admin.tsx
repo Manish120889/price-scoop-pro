@@ -201,7 +201,6 @@ function UsersAndRoles() {
               </div>
               <div className="flex gap-1.5">
                 {r.roles.map((role) => (
-                {r.roles.map((role) => (
                   <span
                     key={role}
                     className={`inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-1 font-bold ${
