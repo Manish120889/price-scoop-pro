@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Shield, ShieldCheck, ShieldOff, Trash2, Search } from "lucide-react";
 
-type AppRole = "admin" | "moderator" | "user";
+type AppRole = "admin" | "user";
 
 const slugify = (s: string) =>
   s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
@@ -159,8 +159,7 @@ function UsersAndRoles() {
         <div>
           <h2 className="font-serif text-2xl font-bold">Members</h2>
           <p className="text-xs text-muted-foreground mt-1">
-            {rows.length} total · {rows.filter((r) => r.roles.includes("admin")).length} admin ·{" "}
-            {rows.filter((r) => r.roles.includes("moderator")).length} moderator
+            {rows.length} total · {rows.filter((r) => r.roles.includes("admin")).length} admin
           </p>
         </div>
         <div className="relative">
@@ -202,20 +201,20 @@ function UsersAndRoles() {
               </div>
               <div className="flex gap-1.5">
                 {r.roles.map((role) => (
+                {r.roles.map((role) => (
                   <span
                     key={role}
                     className={`inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-1 font-bold ${
-                      role === "admin" ? "bg-saffron text-ink" : role === "moderator" ? "bg-mint/30 text-ink" : "bg-ink/10 text-muted-foreground"
+                      role === "admin" ? "bg-saffron text-ink" : "bg-ink/10 text-muted-foreground"
                     }`}
                   >
                     {role === "admin" && <ShieldCheck className="h-3 w-3" />}
-                    {role === "moderator" && <Shield className="h-3 w-3" />}
                     {role}
                   </span>
                 ))}
               </div>
               <div className="flex gap-1.5">
-                {(["admin", "moderator"] as AppRole[]).map((role) =>
+                {(["admin"] as AppRole[]).map((role) =>
                   r.roles.includes(role) ? (
                     <button
                       key={role}
@@ -247,8 +246,8 @@ function UsersAndRoles() {
 
       <div className="bg-cream border border-ink/15 p-4 text-xs text-muted-foreground">
         <strong className="text-ink">How it works:</strong> roles are stored in a separate <code>user_roles</code> table
-        and checked via a <code>has_role()</code> security-definer function. Granting <em>admin</em> gives full content +
-        member management. <em>Moderator</em> is reserved for future moderation tools.
+        and checked via the <code>has_role()</code> security-definer function. Granting <em>admin</em> gives full content
+        and member management.
       </div>
     </div>
   );
