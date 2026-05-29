@@ -4,12 +4,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { SiteNav } from "@/components/SiteNav";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { Shield, ShieldCheck, ShieldOff, Trash2, Search } from "lucide-react";
 
-const slugify = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+type AppRole = "admin" | "user";
+
+const slugify = (s: string) =>
+  s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
 export default function Admin() {
   const { user, isAdmin, loading } = useAuth();
-  const [tab, setTab] = useState<"recipe" | "program" | "day" | "promote">("recipe");
+  const [tab, setTab] = useState<"recipe" | "program" | "day" | "users">("recipe");
   const [programs, setPrograms] = useState<any[]>([]);
 
   useEffect(() => {
@@ -18,57 +22,273 @@ export default function Admin() {
 
   if (loading) return <div className="min-h-screen bg-background"><SiteNav /></div>;
   if (!user) return <Navigate to="/auth" />;
-  if (!isAdmin) return (
-    <div className="min-h-screen bg-background text-foreground grain">
-      <SiteNav />
-      <div className="max-w-md mx-auto p-12 text-center">
-        <h1 className="font-serif text-4xl font-black">Admin only</h1>
-        <p className="mt-3 text-muted-foreground">Your account does not have admin privileges. Use the "Make me admin" tab once a temp owner-bootstrap has been used, or ask another admin.</p>
-        <PromoteSelf />
+  if (!isAdmin)
+    return (
+      <div className="min-h-screen bg-background text-foreground grain">
+        <SiteNav />
+        <div className="max-w-md mx-auto p-12 text-center">
+          <h1 className="font-serif text-4xl font-black">Admin only</h1>
+          <p className="mt-3 text-muted-foreground">
+            Your account does not have admin privileges. If you're the first user, you can bootstrap yourself below.
+          </p>
+          <PromoteSelf />
+        </div>
       </div>
-    </div>
-  );
+    );
 
   return (
     <div className="min-h-screen bg-background text-foreground grain">
       <SiteNav />
       <section className="max-w-[1100px] mx-auto px-6 py-10">
-        <h1 className="font-serif text-4xl font-black">Content admin</h1>
-        <p className="mt-2 text-muted-foreground">Paste content generated from Claude / Copilot / Canva. Hero images can be any public image URL.</p>
+        <h1 className="font-serif text-4xl font-black">Admin console</h1>
+        <p className="mt-2 text-muted-foreground">
+          Author content, manage programs, and grant access to other team members.
+        </p>
         <div className="mt-6 flex flex-wrap gap-2 border-b border-ink/15">
           {[
             ["recipe", "+ Recipe"],
             ["program", "+ Program"],
             ["day", "+ Program day"],
+            ["users", "Users & Roles"],
           ].map(([k, l]) => (
-            <button key={k} onClick={() => setTab(k as any)} className={`px-4 py-2 text-sm uppercase tracking-wider ${tab === k ? "border-b-2 border-saffron text-ink" : "text-muted-foreground"}`}>{l}</button>
+            <button
+              key={k}
+              onClick={() => setTab(k as any)}
+              className={`px-4 py-2 text-sm uppercase tracking-wider ${
+                tab === k ? "border-b-2 border-saffron text-ink" : "text-muted-foreground"
+              }`}
+            >
+              {l}
+            </button>
           ))}
         </div>
         <div className="mt-8">
           {tab === "recipe" && <RecipeForm />}
-          {tab === "program" && <ProgramForm onCreated={() => supabase.from("programs").select("id,title").then(({ data }) => setPrograms(data ?? []))} />}
+          {tab === "program" && (
+            <ProgramForm
+              onCreated={() =>
+                supabase.from("programs").select("id,title").then(({ data }) => setPrograms(data ?? []))
+              }
+            />
+          )}
           {tab === "day" && <DayForm programs={programs} />}
+          {tab === "users" && <UsersAndRoles />}
         </div>
       </section>
     </div>
   );
 }
 
+/* ─── Users & Roles ─────────────────────────────────────── */
+
+type UserRow = {
+  user_id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  roles: AppRole[];
+};
+
+function UsersAndRoles() {
+  const { user: me } = useAuth();
+  const [rows, setRows] = useState<UserRow[]>([]);
+  const [q, setQ] = useState("");
+  const [busy, setBusy] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const load = async () => {
+    setLoading(true);
+    const [{ data: profiles, error: pErr }, { data: roles, error: rErr }] = await Promise.all([
+      supabase.from("profiles").select("user_id, display_name, avatar_url").order("created_at", { ascending: false }),
+      supabase.from("user_roles").select("user_id, role"),
+    ]);
+    if (pErr) toast.error(pErr.message);
+    if (rErr) toast.error(rErr.message);
+
+    const byUser = new Map<string, AppRole[]>();
+    (roles ?? []).forEach((r: any) => {
+      const list = byUser.get(r.user_id) ?? [];
+      list.push(r.role);
+      byUser.set(r.user_id, list);
+    });
+
+    setRows(
+      (profiles ?? []).map((p: any) => ({
+        user_id: p.user_id,
+        display_name: p.display_name,
+        avatar_url: p.avatar_url,
+        roles: byUser.get(p.user_id) ?? ["user"],
+      }))
+    );
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const grant = async (user_id: string, role: AppRole) => {
+    setBusy(user_id + role);
+    const { error } = await supabase.from("user_roles").insert({ user_id, role });
+    setBusy(null);
+    if (error) return toast.error(error.message);
+    toast.success(`Granted ${role}`);
+    load();
+  };
+
+  const revoke = async (user_id: string, role: AppRole) => {
+    if (role === "admin" && user_id === me?.id) {
+      const adminCount = rows.filter((r) => r.roles.includes("admin")).length;
+      if (adminCount <= 1) return toast.error("You're the only admin — promote someone else first.");
+    }
+    setBusy(user_id + role);
+    const { error } = await supabase.from("user_roles").delete().eq("user_id", user_id).eq("role", role);
+    setBusy(null);
+    if (error) return toast.error(error.message);
+    toast.success(`Revoked ${role}`);
+    load();
+  };
+
+  const filtered = rows.filter(
+    (r) =>
+      !q ||
+      (r.display_name ?? "").toLowerCase().includes(q.toLowerCase()) ||
+      r.user_id.toLowerCase().includes(q.toLowerCase())
+  );
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h2 className="font-serif text-2xl font-bold">Members</h2>
+          <p className="text-xs text-muted-foreground mt-1">
+            {rows.length} total · {rows.filter((r) => r.roles.includes("admin")).length} admin
+          </p>
+        </div>
+        <div className="relative">
+          <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <input
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            placeholder="Search name or user id…"
+            className="pl-9 pr-3 py-2 border border-ink/20 bg-background text-sm w-72"
+          />
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="text-sm text-muted-foreground">Loading members…</div>
+      ) : (
+        <div className="border border-ink/15 divide-y divide-ink/10">
+          <div className="grid grid-cols-[1fr_auto_auto] gap-4 px-4 py-2.5 bg-ink/[0.03] text-[10px] uppercase tracking-[0.2em] text-muted-foreground font-semibold">
+            <span>Member</span>
+            <span>Roles</span>
+            <span>Actions</span>
+          </div>
+          {filtered.map((r) => (
+            <div key={r.user_id} className="grid grid-cols-[1fr_auto_auto] gap-4 px-4 py-3 items-center text-sm">
+              <div className="min-w-0 flex items-center gap-3">
+                {r.avatar_url ? (
+                  <img src={r.avatar_url} alt="" className="h-8 w-8 rounded-full object-cover" />
+                ) : (
+                  <div className="h-8 w-8 rounded-full bg-saffron/20 flex items-center justify-center font-serif font-bold">
+                    {(r.display_name ?? "?")[0]?.toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="font-semibold truncate">
+                    {r.display_name ?? "—"} {r.user_id === me?.id && <span className="text-saffron text-xs">(you)</span>}
+                  </div>
+                  <div className="text-[10px] font-mono text-muted-foreground truncate">{r.user_id}</div>
+                </div>
+              </div>
+              <div className="flex gap-1.5">
+                {r.roles.map((role) => (
+                  <span
+                    key={role}
+                    className={`inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-1 font-bold ${
+                      role === "admin" ? "bg-saffron text-ink" : "bg-ink/10 text-muted-foreground"
+                    }`}
+                  >
+                    {role === "admin" && <ShieldCheck className="h-3 w-3" />}
+                    {role}
+                  </span>
+                ))}
+              </div>
+              <div className="flex gap-1.5">
+                {(["admin"] as AppRole[]).map((role) =>
+                  r.roles.includes(role) ? (
+                    <button
+                      key={role}
+                      disabled={busy === r.user_id + role}
+                      onClick={() => revoke(r.user_id, role)}
+                      className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-1.5 border border-ink/20 hover:border-red-500 hover:text-red-500 transition disabled:opacity-50"
+                    >
+                      <ShieldOff className="h-3 w-3" /> Revoke {role}
+                    </button>
+                  ) : (
+                    <button
+                      key={role}
+                      disabled={busy === r.user_id + role}
+                      onClick={() => grant(r.user_id, role)}
+                      className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-2 py-1.5 border border-ink/20 hover:border-saffron hover:text-saffron transition disabled:opacity-50"
+                    >
+                      <Shield className="h-3 w-3" /> Make {role}
+                    </button>
+                  )
+                )}
+              </div>
+            </div>
+          ))}
+          {filtered.length === 0 && (
+            <div className="px-4 py-6 text-sm text-muted-foreground text-center">No members found.</div>
+          )}
+        </div>
+      )}
+
+      <div className="bg-cream border border-ink/15 p-4 text-xs text-muted-foreground">
+        <strong className="text-ink">How it works:</strong> roles are stored in a separate <code>user_roles</code> table
+        and checked via the <code>has_role()</code> security-definer function. Granting <em>admin</em> gives full content
+        and member management.
+      </div>
+    </div>
+  );
+}
+
+/* ─── Self-promote (first admin only) ───────────────────── */
+
 function PromoteSelf() {
   const { user } = useAuth();
   const promote = async () => {
     if (!user) return;
     const { count } = await supabase.from("user_roles").select("*", { count: "exact", head: true }).eq("role", "admin");
-    if ((count ?? 0) > 0) { toast.error("An admin already exists. Ask them to grant you access."); return; }
+    if ((count ?? 0) > 0) {
+      toast.error("An admin already exists. Ask them to grant you access.");
+      return;
+    }
     const { error } = await supabase.from("user_roles").insert({ user_id: user.id, role: "admin" });
     if (error) toast.error(error.message);
-    else { toast.success("You are now admin. Refresh."); setTimeout(() => location.reload(), 800); }
+    else {
+      toast.success("You are now admin. Refresh.");
+      setTimeout(() => location.reload(), 800);
+    }
   };
-  return <button onClick={promote} className="mt-6 bg-ink text-ink-foreground px-5 py-3 text-sm uppercase tracking-wider font-semibold hover:bg-saffron">Make me first admin</button>;
+  return (
+    <button
+      onClick={promote}
+      className="mt-6 bg-ink text-ink-foreground px-5 py-3 text-sm uppercase tracking-wider font-semibold hover:bg-saffron"
+    >
+      Make me first admin
+    </button>
+  );
 }
 
+/* ─── Content forms (unchanged) ─────────────────────────── */
+
 function RecipeForm() {
-  const [f, setF] = useState({ title: "", description: "", hero_image: "", category: "mains", prep_minutes: 0, cook_minutes: 0, servings: 1, calories: 0, protein_g: 0, carbs_g: 0, fats_g: 0, difficulty: "easy", ingredients: "", instructions: "" });
+  const [f, setF] = useState({
+    title: "", description: "", hero_image: "", category: "mains",
+    prep_minutes: 0, cook_minutes: 0, servings: 1, calories: 0,
+    protein_g: 0, carbs_g: 0, fats_g: 0, difficulty: "easy",
+    ingredients: "", instructions: "",
+  });
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const payload = {
