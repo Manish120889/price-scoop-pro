@@ -18,9 +18,8 @@ export const SiteNav = () => {
   return (
     <header className="border-b border-ink/15 bg-cream/90 backdrop-blur sticky top-0 z-50">
       <div className="max-w-[1400px] mx-auto px-6 py-3 flex items-center justify-between gap-6">
-        <Link to="/" className="flex items-baseline gap-2">
-          <span className="font-serif text-2xl font-black tracking-tight">Fatey</span>
-          <span className="text-[10px] tracking-[0.25em] uppercase text-muted-foreground hidden sm:inline">Fitness Champion</span>
+        <Link to="/" className="flex items-center gap-2" aria-label="Surrey AI Automation home">
+          <img src={logo} alt="Surrey AI Automation" className="h-9 w-auto" width={1536} height={1024} />
         </Link>
         <nav className="hidden lg:flex items-center gap-1 text-sm">
           {links.map((l) => (
