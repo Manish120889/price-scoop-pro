@@ -258,17 +258,14 @@ function PromoteSelf() {
   const { user } = useAuth();
   const promote = async () => {
     if (!user) return;
-    const { count } = await supabase.from("user_roles").select("*", { count: "exact", head: true }).eq("role", "admin");
-    if ((count ?? 0) > 0) {
+    const { data, error } = await supabase.rpc("bootstrap_first_admin");
+    if (error) return toast.error(error.message);
+    if (data === false) {
       toast.error("An admin already exists. Ask them to grant you access.");
       return;
     }
-    const { error } = await supabase.from("user_roles").insert({ user_id: user.id, role: "admin" });
-    if (error) toast.error(error.message);
-    else {
-      toast.success("You are now admin. Refresh.");
-      setTimeout(() => location.reload(), 800);
-    }
+    toast.success("You are now admin. Refresh.");
+    setTimeout(() => location.reload(), 800);
   };
   return (
     <button
