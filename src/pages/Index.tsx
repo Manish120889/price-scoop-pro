@@ -1,5 +1,6 @@
 import { ArrowUpRight, Clock, Flame, Leaf } from "lucide-react";
 import heroImg from "@/assets/recipes-hero.jpg";
+import surreyLogo from "@/assets/surrey-ai-logo.png";
 import { SiteNav } from "@/components/SiteNav";
 
 type Recipe = {
