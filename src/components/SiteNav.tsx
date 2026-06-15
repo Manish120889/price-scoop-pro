@@ -1,6 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Menu, Search, LogOut, User as UserIcon, Shield } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import logo from "@/assets/surrey-ai-logo.png";
 
 const links = [
   { to: "/", label: "Home" },
