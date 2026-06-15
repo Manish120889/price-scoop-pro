@@ -276,7 +276,7 @@ const Index = () => {
       <footer className="bg-cream border-t border-ink/15">
         <div className="max-w-[1400px] mx-auto px-6 py-12 grid md:grid-cols-4 gap-8">
           <div className="md:col-span-2">
-            <div className="font-serif text-3xl font-black">Fatey<span className="text-saffron">.</span></div>
+            <img src={(await import("@/assets/surrey-ai-logo.png")).default} alt="Surrey AI Automation" className="h-10 w-auto mb-3" />
             <p className="mt-3 text-sm text-muted-foreground max-w-xs">
               A field journal of training, recipes, and recoveries — from a Punjabi kitchen to a champion's plate.
             </p>
